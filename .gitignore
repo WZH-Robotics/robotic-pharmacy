@@ -1,0 +1,10 @@
+config.py
+etc/
+__pycache__/
+*.py[cod]
+*.pyo
+.vscode/
+.idea/
+*.bag
+.DS_Store
+Thumbs.db

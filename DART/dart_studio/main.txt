@@ -1,0 +1,99 @@
+######################
+######################
+######  controllor code  ######
+######################
+######################
+
+#### 주석 이렇게 # 4개 쓴 건 폐기 할  거
+
+process1 = sub_program_run("process1")
+process2 = sub_program_run("process2")
+process3 = sub_program_run("process3")
+tool = sub_program_run("essential")
+
+def write_and_read(sock, msg):
+    # encode msg and send it to socket
+    encoded_msg = msg.encode()
+    client_socket_write(sock, encoded_msg)
+    wait(1)
+    # read data from socket and decode it
+    res, rx_data = client_socket_read(sock) # client로부터 kiosk queue의 데이터 수신
+    rx_msg = rx_data.decode()
+    tp_log(rx_msg)
+    
+    return rx_msg
+    
+def main():
+    ser = serial_open(port="COM2", baudrate=9600, bytesize=DR_EIGHTBITS) # 아두이노와 통신 연결
+    sock = client_socket_open("192.168.137.58",20001)
+    #client_socket_write(sock, "Controller".encode())
+    wait(1) 
+    movej(
+    while True: 
+#### process1
+        
+        # client로부터 주문 데이터 수신
+        order_msg = write_and_read(sock,"0")
+        medicine, value = process1.order_msg_slicer(order_msg)
+        process1.wait_for_scoop()
+        process1.take_medication(ser, medicine, value)
+        
+        process1.move_to_autopack()
+                
+        
+#### process2
+        
+        # client로부터 오토팩 검사 결과 수신
+        #check_msg = write_and_read(sock,"9")
+        
+        # 수신 데이터에 따라 지정된 task 수행
+        #result_bool, result_info = process2.value_checker(value, value_msg)
+        #process2.request_vertification(result_bool, result_info)
+        #movel(posx(0,0,-14,0,0,0), vel=15, acc=15, mod=1)
+
+        #gripper.grip(1)
+        
+        
+#### process3
+        
+        # 약이 부족한 디스펜서 검사 후 보충
+        #process3.check_and_refill_medication(sock)
+        #dispensor_state, empty_dispensor_list = False, [1,3,7]
+        '''
+        while True:
+            #디스펜서 빈 거 있는지, 뭐가 비었는지 확인
+            #dispensor_state, empty_dispensor_list = process3.check_dispensor()
+            # 예시)
+            # 모두 차있으면 break
+            if dispensor_state == True:
+                break
+                
+            # 부족하다면 뭐가 부족한지 확인
+            else:
+                #빈 디스펜서에 대해 다음 함수 실행 
+                for num_of_empty_dispensor in empty_dispensor_list:
+                    process3.move_to_view_point(num_of_empty_dispensor)
+                    
+                    coord_msg = write_and_read(sock,str(num_of_empty_dispensor)) # client에게 x,z 데이터 요청
+                    process3.move_and_catch_bottle(num_of_empty_dispensor, coord_msg)
+            
+                    # 이때 상태는 약통을 잡은 상태
+                    process3.move_to_opener()
+                    process3.open_cap()
+                    process3.catch_and_pour(num_of_empty_dispensor)
+                    dispensor_state, empty_dispensor_list = True, None
+        '''
+        ## process done
+        
+        # 원점 복귀
+        #movej(0,0,0,0,0,0)
+        # client에게 모든 task 완료를 전달
+        #server_socket_write(sock, "0".encode())
+        wait(0.3)
+        
+    client_socket_close(sock)
+    res, rx_data = serial_close(ser)
+# end of main function
+
+
+main()

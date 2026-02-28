@@ -1,0 +1,28 @@
+from DRCF import *
+
+## 속도 함수 정의
+def set_speed(a,b):
+    set_velj(a); set_accj(a)
+    set_velx(b); set_accx(b)
+    
+## 속도 최대로 설정
+def set_speed_max():
+    set_velj(150); set_accj(100)
+    set_velx(1000); set_accx(500)
+    
+## 그리퍼 함수 정의
+def grip(x):
+    set_digital_outputs([-1,-2,-3,-4])
+    wait(0.3)
+    if(x == 0): # fully closed
+        tp_log("catch")
+        set_digital_outputs([1,-2,-3,-4])
+        wait(0.5)
+    if(x == 1): # open little
+        tp_log("open little")
+        set_digital_outputs([-1,2,-3,-4])
+        wait(0.5)
+    elif(x == 2): # fully open
+        tp_log("fully open")
+        set_digital_outputs([-1,-2,3,-4])
+        wait(0.5)

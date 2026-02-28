@@ -1,0 +1,219 @@
+######################
+######################
+######  controllor code  ######
+######################
+######################
+
+## process1
+
+## 주문 들어오면 task 처리하기
+
+from DRCF import *
+
+
+## 중간 경로 좌표 선언
+autopack_out_pos = posx(-330.52, -179.89, 465.39, 29.5, 180, -151.02)
+autopack_in_pos = posx(-328.07, -338.08, 434.24, 154.09, 180, -24.59)
+
+mid_pos0 =posj(-10, 11.7, -106.63, -180, 85.08, 130.68) # 오토팩- 선반 최초 중간 경로
+mid_pos1 = posx(-165.88, 300.69, 332.85, 14.52, 180, 14.34) # 비타민 중간 경로
+mid_pos2 = posx(-402.5, 75.53, 300.62, 170.24, -180, 81.49) # 캔디류 중간 경로
+
+## 비타민류
+distance_for_meidcine_shelf = posx(33,0,0,0,0,0)
+pos_vit_h = posx(54.92, 308.06, 332.83, 125.63, 180, 125.45) # 1번 비타민
+pos_vit_m = posx(-66.48, 308.02, 332.83, 112.1, 180, 111.92) #2번 비타민
+pos_vit_s = posx(-195.18, 307.98, 332.82, 62.19, 180, 62.01) # 3번 비타민
+pos_vit_c = posx(-316.77, 307.91, 332.8, 73.65, 180, 73.47) # 4번 비타민
+
+# 캔디류
+candy_pos1 = posx(-425.65, 284.76, 300.64, 146.91, -180, 58.16) # 1번 캔디
+candy_pos2 = posx(-425.5, 162.35, 300.63, 54.27, 180, -34.48) # 2번 캔디
+candy_pos3 = posx(-425.59, 38.44, 300.63, 97.58, 180, 8.83) # 3번 캔디
+candy_pos4 = posx(-425.56, -86.05, 300.63, 94.26, 180, 5.51) # 4번 캔디
+
+tool = sub_program_run("essential")
+    
+## 주문 내용을 사용할 수 있게 슬라이싱 및 리스트로 변환
+def order_msg_slicer(order_msg):
+    # slicing data
+    sliced_lists = order_msg.split(",") # 받은 메세지 쉼표 기준으로 slice
+    # put sliced data into lists
+    medicine, value = list(), list()
+    
+    for sliced_list in sliced_lists:
+        tp_log("{0}".format(sliced_list))
+        medicine.append(sliced_list.split(":")[0])
+        value.append(sliced_list.split(":")[1])
+    return medicine, value
+    
+## 힘이 가해질 때까지 대기
+def wait_for_scoop():
+    force_tool = get_tool_force(DR_WORLD)
+    while not  (force_tool[0] or force_tool[1] or force_tool[2] > 0):
+        wait(0.1)
+        force_tool = get_tool_force(DR_WORLD)
+    wait(2)
+    tool.grip(0)
+    wait(1)
+
+## 약을 조제함(통합)
+def take_medication(ser, medicine, value):
+    run_time = len(medicine)
+    
+    tool.set_speed(30,30) #최대로 속도 설정
+    wait(1)
+    
+    movel(posx(0,0,12,0,0,0),mod=1)
+    wait(0.3)
+    movel(posx(0,128,38,0,0,0),mod=1) # 밑바닥 닫기
+    wait(0.3)
+    movej(mid_pos0)
+    
+    for i in range(0, run_time):
+        tp_log("{0}".format(medicine[i]))
+        tp_log("{0}".format(value[i]))
+        
+        # 함수를 실행 시 약 이름과 값을 전달
+        task_case_for_medicine(ser, medicine[i],value[i])
+        wait(0.5)
+    
+## 실제로 약을 조제하는 코드
+def task_case_for_medicine(ser, medi_info, value):
+    tool.set_speed_max()
+
+    ## 각 case에 맞게 함수 실행
+    # 1번 선반
+    if medi_info == 'vit_s' or medi_info=='vit_c' or medi_info == 'vit_h' or medi_info == 'vit_m':
+        movel(mid_pos1)
+        # 스완슨
+        if medi_info == 'vit_s':
+            tp_log("movej to vit_s_posj")
+            movel(pos_vit_s)
+            take_medicine(ser, 3, value)
+            
+        # 커클랜드
+        elif medi_info == 'vit_c':
+            tp_log("movej to vit_c_posj")
+            movel(pos_vit_c)
+            take_medicine(ser, 4, value)
+            
+        # 호바흐 비타민
+        elif medi_info == 'vit_h':
+            tp_log("movej to vit_h_posj")
+            movel(pos_vit_h)
+            take_medicine(ser, 1, value)
+            
+        # 메가씨 비타민        
+        elif medi_info == 'vit_m':
+            tp_log("movej to vit_m_posj")
+            movel(pos_vit_m)
+            take_medicine(ser, 2, value)
+        else:
+                tp_log("Wrong")
+                
+    ## 2번 선반
+    elif medi_info == 'mint_w' or medi_info == 'mint_b' or medi_info == 'mint_g' or medi_info == 'jelly':
+        movej(mid_pos0)
+        movel(mid_pos2)
+        # 민티아 칼피스 화이트
+        if medi_info == 'mint_w':
+            tp_log("movej to mint_k_posj")
+            movel(candy_pos1)
+            take_medicine(ser, 5, value)
+    
+            
+        # 민티아 콜드 스매쉬 블루 
+        elif medi_info == 'mint_b':
+            tp_log("movej to mint_c_posj")
+            movel(candy_pos3)
+            take_medicine(ser, 7, value)
+    
+            
+        # 민티아 포도
+        elif medi_info == 'mint_g':
+            tp_log("movej to mint_g_posj")
+            movel(candy_pos2)
+            take_medicine(ser, 6, value)
+    
+            
+        # 젤리빈
+        elif medi_info == 'jelly':
+            tp_log("movej to jelly_posj")
+            movel(candy_pos4)
+            take_medicine(ser, 8, value)
+    
+        else:
+            tp_log("Error. No data in this function")
+    else:
+        tp_log("Error. No data in this function")
+
+def take_medicine(ser, arduino_num, value):
+    # 위치에 따라 상대이동 방향 및 거리 지정
+    if arduino_num<5:
+        delta_distance = posx(-33,0,0,0,0,0) # 선반에 맞게 movel 좌표 선언
+        home_pose = mid_pos1
+    else:
+        delta_distance = posx(0,33,0,0,0,0) # 선반에 맞게 movel 좌표 선언
+        home_pose = mid_pos2
+        
+    # value를 아침 점심 저녁으로 나눈다.
+    morning = int(value[0])
+    afternoon = int(value[1])
+    evening = int(value[2])
+    
+    # 알약 추출 및 이동
+    send_signal_to_drop(ser, arduino_num, morning) # 아두이노로 추출 신호 송신
+    wait(0.3)
+    if (morning>0):
+        tp_log("wait_for_signal(ser)") # 아두이노로부터 추출 완료 신호를 대기
+        wait(6)
+    movel(delta_distance, vel=1000, mod=DR_MV_MOD_REL)
+    wait(0.3)
+    
+    send_signal_to_drop(ser, arduino_num, afternoon) # 아두이노로 추출 신호 송신
+    wait(0.3)
+    if (afternoon>0):
+        tp_log("wait_for_signal(ser)") # 아두이노로부터 추출 완료 신호를 대기
+        wait(6)
+    movel(delta_distance, vel=1000, mod=DR_MV_MOD_REL)
+    wait(0.3)
+    
+    send_signal_to_drop(ser, arduino_num, evening) # 아두이노로 추출 신호 송신
+    wait(0.3)
+    if (evening>0):
+        tp_log("wait_for_signal(ser)") # 아두이노로부터 추출 완료 신호를 대기
+        wait(6)
+    movel(home_pose)
+    
+def send_signal_to_drop(ser, arduino_num, times):
+    # times만큼 반복
+    while times:
+        ser_msg = "{0}".format(arduino_num) # "1" + " " + f"{arduino_num}" + "535"
+        serial_write(ser, ser_msg.encode()) # 실제 추출 신호 송신
+        wait(1)
+        
+        # 떨어졌으면 times를 1씩 뺀다.
+        medi_dropped = True #get_data_from_arduino()
+        if medi_dropped == True:
+            tp_log("times-=1")
+            wait(0.3)
+            times-=1
+            
+def wait_for_siganl(ser):
+    res, rx_data = serial_read(ser, length=10)
+    rx_msg = rx_data.decode()
+    if rx_msg == "Done":
+        return None
+        
+def move_to_autopack():
+    tool.set_speed_max()
+    # move to autopack
+    movej(mid_pos0)
+    
+    ### 오토팩 넣는 코드
+    #movel(autopack_out_pos)
+    #movel(posx(0,-125,0,0,0,0), vel = 30, mod=1)
+    #movel(posx(0,0,-32,0,0,0), vel = 10, mod=1)
+    #movel(posx(0,125,0,0,0,0),mod=1)
+    

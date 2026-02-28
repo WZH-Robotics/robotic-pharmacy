@@ -1,0 +1,51 @@
+######################
+######################
+######  controllor code  ######
+######################
+######################
+
+## process2
+
+## 오토팩에서 검사받고 떨구기
+
+from DRCF import *
+
+def request_vertification(result_bool, result_info):
+    # check if medicine count is correct
+    if result_bool: # 약이  개수에 맞게 있을 경우
+        tp_log("movel(drop_posx)") # 약을 떨구는 동작 추가
+        
+    else: # 약에 오차가 있다면
+        if result_info == "+":
+            tp_log("+") # 약이 과할 때 동작 추가
+        elif result_info == "-":
+            tp_log("-") # 약이 부족할 때  동작 추가
+        else:
+            tp_log("else") # 약이 ?일 때 ?
+    
+    # movej(0,0,0,0,0,0) # 다음 task 준비 # 디스펜서에 약 보충 후 잡고 원점 복귀
+    
+# 검사결과에 따른 task 수행
+def value_checker(values, check_result):
+    # value_list = values
+    sum_of_value = 0
+    for value in values:
+        sum_of_value += int(value)
+        
+    # string으로 형변환
+    str_sum_value = str(sum_of_value)
+    
+    ## value와 value_msg를 비교하여 task 수행
+    
+    # order과 검수값이 같을 경우
+    if (str_sum_value[0]==check_result[0]) and (str_sum_value[2]==check_result[2]):
+        return True, None
+    # 약이 부족한 칸이 존재
+    elif int(str_sum_value[0])>int(check_result[0]) or int(str_sum_value[2])>int(check_result[2]):
+        return False, '-' # 약이 부족한 경우 task
+    # 약이 부족한 칸이 없고 검수결과와 다를 때 : 약이 많음
+    else:
+        return False, '+'   # 약이 많을 경우 task
+        
+# def ready_to_next_process()
+    

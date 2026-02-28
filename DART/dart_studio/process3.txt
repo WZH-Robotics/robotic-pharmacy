@@ -1,0 +1,126 @@
+######################
+######################
+######  controllor code  ######
+######################
+######################
+
+## process3
+
+## 약 부족하면 채우기
+
+from DRCF import *
+
+view_point1 =posj(-20.4, -6.54, -90.4, 265.6, -69.82, 188.52)   ## 긴 변 쪽
+view_point2 =posj(-67.51, 3.18, -99.39, 272.39, 69.13, 173.33)  ## 짧은변 쪽
+tool = sub_program_run("essential")
+
+def move_to_view_point(num_of_empty_dispensor):
+    if num_of_empty_dispensor<5:
+        movej(view_point1)
+    else:
+        movej(view_point2)
+    wait(0.3)
+    
+def move_and_catch_bottle(num_of_empty_dispensor, coord_msg):
+    sliced_coord =coord_msg.split(",")
+
+    if num_of_empty_dispensor<5:
+        work_on_left_shelf(sliced_coord)
+    else:
+        work_on_right_shelf(sliced_coord)
+    
+# 왼쪽 선반에서 약통 잡는 코드
+def work_on_left_shelf(coord_list):
+    # coord_list를 상황에 맞게 분리
+    value_x, value_y = coord_list
+    move_x = int(value_x)
+    move_y = int(value_y)
+    tp_log("x : {0}mm, y : {1}mm".format(value_x, value_y))
+    wait(0.1)
+    
+    # 실제 약통으로 이동
+    movel([move_x,0,0,0,0,0],mod = 1)
+    wait(0.1)
+    gripper.grip(1)
+    
+    movel([0,move_y,0,0,0,0],mod = 1)
+    wait(0.1)
+    gripper.grip(0)
+    
+    movel([-move_x,-move_y,0,0,0,0],mod = 1)
+    wait(0.1)
+
+# 오른쪽 선반에서 약통 잡는 코드
+def work_on_right_shelf(coord_list):
+    # coord_list를 상황에 맞게 분리
+    value_y, value_x = coord_list
+    move_y = int(value_y)
+    move_x = int(value_x) #절댓값, 부호는 반대처리해야함
+    tp_log("x : {0}mm, y : {1}mm".format(value_x, value_y))
+    wait(0.1)
+    
+    # 실제 약통으로 이동
+    movel([0,move_y,0,0,0,0],mod = 1)
+    wait(0.1)
+    #gripper.grip(1)
+    
+    movel([-move_x,0,0,0,0,0],mod = 1)
+    wait(0.1)
+    #gripper.grip(0)
+    
+    movel([move_x,-move_y,0,0,0,0],mod = 1)
+    wait(0.1)
+
+
+def move_to_opener():
+    tp_log("movej(opener_posj)") # 오프너로 가져감
+    wait(0.1)
+    tp_log("movel(opener_posx)") # 오프너에 꽂음
+    wait(0.1)
+    
+    tool.grip(1) # 놔버리기~
+    wait(0.3)
+    
+    tp_log("movel(cap_posx1)") # 뚜껑 잡기 위한 준비 (안부딪히고 빠져나오게끔)
+    wait(0.1)
+        
+def open_cap():
+    tp_log("movej(cap_posj1)") # 뚜껑 잡을 수 있는 자세 
+    wait(0.1)
+    
+    tool.grip(0) # 잡고 비틀기 
+    wait(0.3)
+    
+    # 토크가 인가되면 위로 올라가게 
+    #while True:
+        ###힘이 작용했는지 측정
+        #bottle_forcex = check_force_condition(0, min=1, max = 30)
+        #bottle_forcey = check_force_condition(1, min=1, max = 30)
+        #bottle_forcez = check_force_condition(2, min=1, max = 30)
+        #force_tool = get_tool_force(DR_WORLD)
+        #msg = ("{0}").format(force_tool)
+        #wait(0.1)
+        #if (force_tool[2] > 0):
+            #tp_log(msg)
+            #movel([0,0,5,0,0,0], mod=1)
+            #wait(0.5)
+            #count += 1
+            #wait(0.5)
+            #if (count == 9):
+                #movel([0,0,20,0,0,0], mod = 1)
+                #break
+    tp_log("open_cap")
+    ## 뚜껑 버리기
+    tp_log("movej(trash_can_posj)") # 쓰레기통 좌표로 이동
+    wait(0.1)
+    gripper.grip(1)
+    wait(0.3)
+                    
+def catch_and_pour(num_of_empty_dispensor):
+    # 뚜껑 열린 통 잡기
+    tp_log("movej(opener_posj)")
+    wait(0.1)
+    tp_log("movel(opener_posx)")
+    wait(0.1)
+    tool.grip(0)
+    wait(0.3)
